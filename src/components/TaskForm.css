@@ -1,0 +1,62 @@
+/* TaskForm.css */
+
+.task-form {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background-color: #f9f9f9;
+}
+
+.task-form h2 {
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: #333;
+}
+
+.task-form input,
+.task-form select {
+  display: block;
+  width: calc(100% - 22px);
+  margin-bottom: 15px;
+  padding: 10px;
+  font-size: 16px;
+}
+
+.task-form input[type="text"],
+.task-form input[type="date"],
+form input[type="datetime-local"] {
+  margin-bottom: 10px;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.task-form select {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.task-form button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 8px 16px;
+  margin-right: 10px;
+}
+
+.task-form button:hover {
+  background-color: #0056b3;
+}
+
+.task-list .reminder {
+  font-style: italic;
+  color: #555;
+}
+
+
