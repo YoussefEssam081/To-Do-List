@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import './App.css';
 import TaskForm from './components/TaskForm';
 import TaskList from './components/TaskList';
@@ -6,166 +6,158 @@ import { Tasks } from './components/Task';
 import TaskChart from './components/TaskChart ';
 import Navbar from './components/Navbar';
 
-// Load tasks from local storage or use default tasks
+// Function to retrieve tasks from local storage or use default tasks if none are found
 const getInitialTasks = () => {
   const savedTasks = localStorage.getItem('tasks');
   return savedTasks ? JSON.parse(savedTasks) : Tasks;
 };
 
 function App() {
-  const [tasks, setTasks] = useState(getInitialTasks);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isAdd, setIsAdd] = useState(false);
-  const [taskToEdit, setTaskToEdit] = useState(null);
-  const [filter, setFilter] = useState('all'); // 'all', 'completed', 'pending'
-  const [sort, setSort] = useState('date'); // 'date', 'priority', 'title'
-  const [lastDeletedTask, setLastDeletedTask] = useState(null); // Store the deleted task temporarily
-  const [searchFilter, setSearchFilter] = useState({ title: '' });
-  const [searchFilteredTasks, setSearchFilteredTasks] = useState([]);
+  // State variables
+  const [tasks, setTasks] = useState(getInitialTasks); // Tasks state
+  const [isEditing, setIsEditing] = useState(false); // Editing mode state
+  const [isAdd, setIsAdd] = useState(false); // Adding mode state
+  const [taskToEdit, setTaskToEdit] = useState(null); // Task currently being edited
+  const [filter, setFilter] = useState('all'); // Filter state (e.g., 'completed', 'pending', 'all')
+  const [sort, setSort] = useState('date'); // Sort state (e.g., 'date', 'priority', 'title')
+  const [lastDeletedTask, setLastDeletedTask] = useState(null); // Last deleted task for undo
+  const [searchFilter, setSearchFilter] = useState({ title: '' }); // Search filter by title
+  const [searchFilteredTasks, setSearchFilteredTasks] = useState([]); // Tasks filtered by search
+  const [selectedTasks, setSelectedTasks] = useState({}); // Store selected tasks for bulk actions
 
-  
-  //  Toggle Dark Mode
-
+  // Dark mode state with default value from local storage
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Get the saved mode from localStorage
     const savedMode = localStorage.getItem('darkMode');
-    return savedMode ? JSON.parse(savedMode) : false; // return back is false caz in value in localStorage yet. then when u press on the button it will return true caz the useeffect aleady render and setvalue in localStorage so it will back with true value .
+    return savedMode ? JSON.parse(savedMode) : false;
   });
 
+  // Effect to apply dark mode and save preference to local storage
   useEffect(() => {
-    // Apply the dark mode class based on the state
     document.body.className = isDarkMode ? 'dark-mode' : '';
-    // Save the current mode in localStorage
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
-    console.log('isDarkMode state changed:', isDarkMode);
-    console.log('New mode stored in localStorage:', localStorage.getItem('darkMode'));
   }, [isDarkMode]);
 
+  // Toggle dark mode state
   const toggleDarkMode = () => {
     setIsDarkMode((prevMode) => !prevMode);
   };
 
-
-  // Save tasks to local storage whenever they change
+  // Effect to save tasks to local storage whenever tasks state changes
   useEffect(() => {
-
-    setIsDarkMode(prevMode => !prevMode);
     localStorage.setItem('tasks', JSON.stringify(tasks));
   }, [tasks]);
 
-
-
+  // Add a new task to the list
   const addTask = (newTask) => {
     setTasks([...tasks, newTask]);
-    setIsAdd(false); // Hide form after adding
+    setIsAdd(false); // Hide the form after adding
   };
 
+  // Edit an existing task by ID
   const editTask = (id, updatedTask) => {
     const updatedTasks = tasks.map((task) =>
       task.id === id ? { ...task, ...updatedTask } : task
     );
     setTasks(updatedTasks);
-    setIsEditing(false); // Hide form after editing
+    setIsEditing(false); // Hide the form after editing
     setTaskToEdit(null); // Clear the task being edited
   };
 
+  // Delete a task by ID and store it temporarily for potential undo
   const deleteTask = (id) => {
-
-    const taskToDelete = tasks.find(task => task.id === id);
-    setLastDeletedTask(taskToDelete); // Store the deleted task temporarily
+    const taskToDelete = tasks.find((task) => task.id === id);
+    setLastDeletedTask(taskToDelete); // Store the deleted task
 
     const updatedTasks = tasks.filter((task) => task.id !== id);
     setTasks(updatedTasks);
+    deleteSelectedTasks(); // Clear selected tasks if bulk delete is used
   };
 
+  // Undo the last deleted task by adding it back to the list
   const undoDelete = () => {
-
     if (lastDeletedTask) {
       setTasks([...tasks, lastDeletedTask]);
       setLastDeletedTask(null);
     }
-  }
+  };
 
+  // Scroll to the task form when adding or editing a task
   const handleScrollToForm = () => {
     setTimeout(() => {
       const formElement = document.getElementById('taskForm');
       if (formElement) {
         formElement.scrollIntoView({ behavior: 'smooth' });
       }
-    }, 100); // Adjust timeout as necessary
+    }, 100); // Adjust timeout if needed
   };
 
+  // Toggle edit mode for a specific task and scroll to the form
   const toggleEdit = (task) => {
     setIsEditing(true);
     setIsAdd(false); // Ensure add mode is off
-    setTaskToEdit(task); // pass task value to state for compare them in form to get value
+    setTaskToEdit(task); // Set the task to be edited
     handleScrollToForm();
   };
 
+  // Enable add mode and scroll to the form
   const toggleAdd = () => {
     setIsAdd(true);
     setIsEditing(false); // Ensure edit mode is off
-    setTaskToEdit(null); // Clear the task being edited
+    setTaskToEdit(null); // Clear any task being edited
     handleScrollToForm();
   };
 
-  // Filtering Tasks 
-
+  // Filter tasks based on the selected filter ('all', 'completed', 'pending')
   const filteredTasks = tasks.filter((task) => {
-
-    if (filter === "completed") { return task.completed; }
-    else if (filter === "pending") { return !task.completed }
-    else { return true; } // 'all' filter shows all tasks
-
-  });
-
-  // Sorting Tasks 
-
-  const sortedTasks = [...filteredTasks].sort((a, b) => {
-    if (sort === 'date') {
-      return new Date(a.dueDate) - new Date(b.dueDate);
-    } else if (sort === 'priority') {
-      const priorities = { "High": 1, "Medium": 2, "Low": 3 };
-      return priorities[a.priority] - priorities[b.priority];
-    } else if (sort === 'title') {
-      return a.title.localeCompare(b.title);
+    if (filter === 'completed') {
+      return task.completed;
+    } else if (filter === 'pending') {
+      return !task.completed;
+    } else {
+      return true; // 'all' filter shows all tasks
     }
   });
 
-  // provide a way to mark tasks as completed.
+  // Sort tasks based on the selected sorting option ('date', 'priority', 'title')
+  // Use useMemo to avoid re-sorting on every render
+  const sortedTasks = useMemo(() => {
+    return [...filteredTasks].sort((a, b) => {
+      if (sort === 'date') {
+        return new Date(a.dueDate) - new Date(b.dueDate);
+      } else if (sort === 'priority') {
+        const priorities = { High: 1, Medium: 2, Low: 3 };
+        return priorities[a.priority] - priorities[b.priority];
+      } else if (sort === 'title') {
+        return a.title.localeCompare(b.title);
+      }
+    });
+  }, [filteredTasks, sort]);
 
+  // Toggle task completion status by ID
   const toggleCompletion = (id) => {
-
-    const updatedTasks = tasks.map(task =>
+    const updatedTasks = tasks.map((task) =>
       task.id === id ? { ...task, completed: !task.completed } : task
-    )
+    );
     setTasks(updatedTasks);
-  }
+  };
 
-  //Handle Reminders
-  // why use task.reminder inside data for 
-  //When comparing dates, you need to use JavaScript’s Date object to ensure accurate and meaningful comparisons. 
-
+  // Handle task reminders and show alerts if the reminder date is due
   useEffect(() => {
     const checkReminders = () => {
-      tasks.forEach(task => {
+      tasks.forEach((task) => {
         if (task.reminder && new Date(task.reminder) <= new Date()) {
           alert(`Reminder for task: ${task.title}`);
         }
-      })
-    }
+      });
+    };
 
-    const intervalId = setInterval(checkReminders, 6000000000)  // Check reminders based on specific time
+    const intervalId = setInterval(checkReminders, 60000000); // Check reminders every .... time
 
-    // Cleanup function to clear the interval
+    return () => clearInterval(intervalId); // Cleanup function to clear the interval
+  }, [tasks]);
 
-    return () => clearInterval(intervalId);
-  }, [tasks]);  // Dependency array to re-run effect when tasks change
-
-
-  // search on tasks by title
-  const searchFIlterByTitle = (event) => {
-
+  // Filter tasks by title based on the search input
+  const searchFilterByTitle = (event) => {
     const { value } = event.target;
     setSearchFilter({ title: value });
 
@@ -174,20 +166,33 @@ function App() {
       task.title.toLowerCase().includes(value.toLowerCase())
     );
     setSearchFilteredTasks(filtered);
-  }
+  };
+
+  // Handle selection of tasks for bulk actions
+  const handleCheckboxChange = (taskId) => {
+    setSelectedTasks((prevState) => ({
+      ...prevState,
+      [taskId]: !prevState[taskId], // Toggle selection for this specific taskId
+    }));
+  };
+
+  // Delete all selected tasks
+  const deleteSelectedTasks = () => {
+    const updatedTasks = tasks.filter((task) => !selectedTasks[task.id]);
+    setTasks(updatedTasks);
+
+    // Clear selectedTasks after deletion
+    setSelectedTasks({});
+  };
 
 
-  
 
   return (
     <div>
       <Navbar
-      toggleDarkMode={toggleDarkMode}
-      isDarkMode={isDarkMode}
-       />
-      <h1 className='title_to_do_list'>My To-Do List</h1>
-
-      
+        toggleDarkMode={toggleDarkMode}
+        isDarkMode={isDarkMode}
+      />
 
       <div className="button-container-sort-filter">
         <div className="button-title">Filter Tasks</div>
@@ -216,13 +221,10 @@ function App() {
           placeholder="Search..."
           class="search-bar"
           value={searchFilter.title}
-          onChange={searchFIlterByTitle}
+          onChange={searchFilterByTitle}
         />
         <button type="submit" class="search-button">Search</button>
       </div>
-
-
-
 
       <TaskForm
         addTask={addTask}
@@ -238,7 +240,8 @@ function App() {
         toggleEdit={toggleEdit}
         toggleAdd={toggleAdd}
         toggleCompletion={toggleCompletion}
-        
+        handleCheckboxChange={handleCheckboxChange}
+        selectedTasks={selectedTasks}
       />
 
       {lastDeletedTask && (

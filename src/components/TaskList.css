@@ -10,8 +10,10 @@
   border-radius: 8px;
   padding: 16px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 16px;
+  
   position: relative;
+  width: 50%;
+  margin: 16px auto;
 }
 
 .task-title {
@@ -84,6 +86,65 @@
   color: #555;
 }
 
+/* Hide the default checkbox */
+.animated-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+/* Container for animated checkbox */
+.animated-checkbox {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  font-size: 16px;
+  margin: 10px;
+}
+
+/* Label styling */
+.animated-checkbox .checkbox-label {
+  position: relative;
+  padding-left: 30px; 
+  cursor: pointer;
+}
+
+/* Custom checkbox styling */
+.animated-checkbox .checkbox-label::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  background-color: #eee;
+  border-radius: 4px;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+/* Checkbox checked state */
+.animated-checkbox input[type="checkbox"]:checked + .checkbox-label::before {
+  background-color: #3498db;
+  transform: scale(1.2);
+}
+
+/* Checkmark styling */
+.animated-checkbox .checkbox-label::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 4px;
+  width: 6px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* Show checkmark when checked */
+.animated-checkbox input[type="checkbox"]:checked + .checkbox-label::after {
+  opacity: 1;
+}
 
 
 /* Default Light Mode */
@@ -124,7 +185,8 @@ body {
   background-color: var(--card-background-color);
   color: var(--text-color) ;
 }
-.button-title
+.button-title ,.task-due-date , .task-status
 {
   color: var(--text-color) ;
 }
+

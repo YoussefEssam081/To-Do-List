@@ -1,7 +1,7 @@
 import React from 'react';
 import './TaskList.css';
 
-export default function TaskList({ tasks, deleteTask, toggleEdit, toggleAdd, toggleCompletion }) {
+export default function TaskList({ tasks, deleteTask, toggleEdit, toggleAdd, toggleCompletion, handleCheckboxChange, selectedTasks }) {
     return (
         <div className="task-list">
             {tasks.length > 0 ? (
@@ -26,6 +26,15 @@ export default function TaskList({ tasks, deleteTask, toggleEdit, toggleAdd, tog
                                 {task.completed ? "Mark as Pending" : "Mark as Completed"}
                             </button>
                         </div>
+                        <label className="animated-checkbox">
+                            <input
+                                type="checkbox"
+                                checked={!!selectedTasks[task.id]}
+                                onChange={() => handleCheckboxChange(task.id)}
+                            />
+                            <span className="checkbox-label">{task.title}</span>
+                        </label>
+
                     </div>
                 ))
             ) : (
